@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Project = require('./Project');
 
 const subtaskSchema = new mongoose.Schema(
   {
@@ -81,10 +82,28 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+      required: [true, 'Project is required'],
+      index: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Created by user is required'],
+      index: true,
+    },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
       index: true,
     },
   },
@@ -99,8 +118,8 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
-taskSchema.index({ owner: 1, createdAt: -1 });
-taskSchema.index({ owner: 1, status: 1, priority: 1, dueDate: 1 });
+taskSchema.index({ project: 1, createdAt: -1 });
+taskSchema.index({ project: 1, status: 1, priority: 1, dueDate: 1 });
 
 taskSchema.virtual('subtasksCount').get(function getSubtasksCount() {
   return this.subtasks?.length || 0;
@@ -118,6 +137,35 @@ taskSchema.virtual('completionPercentage').get(function getCompletionPercentage(
   }
 
   return Math.round((this.completedSubtasksCount / total) * 100);
+});
+
+taskSchema.pre('validate', function syncCreatorFields(next) {
+  if (!this.createdBy && this.owner) {
+    this.createdBy = this.owner;
+  }
+
+  if (!this.owner && this.createdBy) {
+    this.owner = this.createdBy;
+  }
+
+  next();
+});
+
+taskSchema.pre('validate', async function validateAssignedMember(next) {
+  if (!this.project || !this.assignedTo) {
+    return next();
+  }
+
+  const project = await Project.findOne({
+    _id: this.project,
+    'members.user': this.assignedTo,
+  }).select('_id');
+
+  if (!project) {
+    this.invalidate('assignedTo', 'Assigned user must be a member of the selected project.');
+  }
+
+  next();
 });
 
 taskSchema.pre('save', function syncCompletedAt(next) {

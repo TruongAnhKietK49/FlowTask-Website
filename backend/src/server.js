@@ -1,13 +1,18 @@
+const http = require('http');
+const mongoose = require('mongoose');
 const app = require('./app');
 const connectDb = require('./config/db');
 const config = require('./config/env');
 const { startReminderScheduler } = require('./jobs/reminderScheduler');
+const { initializeSocket } = require('./socket');
 
 const startServer = async () => {
   await connectDb();
   const reminderJob = startReminderScheduler();
+  const httpServer = http.createServer(app);
+  initializeSocket(httpServer);
 
-  const server = app.listen(config.port, () => {
+  const server = httpServer.listen(config.port, () => {
     console.log(`API server running on port ${config.port}`);
   });
 
@@ -16,7 +21,7 @@ const startServer = async () => {
 
     server.close(async () => {
       try {
-        await require('mongoose').connection.close();
+        await mongoose.connection.close();
       } finally {
         process.exit(0);
       }

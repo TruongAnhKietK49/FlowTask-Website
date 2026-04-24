@@ -14,13 +14,17 @@ const runReminderSweep = async () => {
       $lte: nextHour,
     },
     reminderSent: false,
-  }).populate('owner', 'email name');
+  })
+    .populate('createdBy', 'email name')
+    .populate('assignedTo', 'email name')
+    .populate('project', 'name');
 
   for (const task of tasks) {
     const reminderType = getReminderType(task.dueDate, now);
+    const reminderRecipient = task.assignedTo || task.createdBy;
 
     console.log(
-      `[Reminder] ${reminderType} | user=${task.owner?.email || 'unknown'} | task="${task.title}" | due=${task.dueDate.toISOString()}`
+      `[Reminder] ${reminderType} | user=${reminderRecipient?.email || 'unknown'} | project="${task.project?.name || 'unknown'}" | task="${task.title}" | due=${task.dueDate.toISOString()}`
     );
 
     task.reminderSent = true;

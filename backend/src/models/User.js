@@ -1,6 +1,15 @@
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 
+const normalizeObjectIdArray = (values = []) =>
+  Array.from(
+    new Set(
+      (values || [])
+        .filter(Boolean)
+        .map((value) => value.toString())
+    )
+  );
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -23,6 +32,16 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Password is required'],
       minlength: [8, 'Password must be at least 8 characters'],
       select: false,
+    },
+    projects: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Project',
+        },
+      ],
+      default: [],
+      set: normalizeObjectIdArray,
     },
   },
   {

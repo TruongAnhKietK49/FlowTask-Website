@@ -37,7 +37,7 @@ function LoginPage() {
         <div>
           <p className="eyebrow">Welcome back</p>
           <h1>Sign in to FlowTask</h1>
-          <p className="auth-copy">Track priorities, finish work faster, and keep every task private.</p>
+          <p className="auth-copy">Track priorities across projects, collaborate in shared workspaces, and keep JWT auth in place.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

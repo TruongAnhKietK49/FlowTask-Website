@@ -7,9 +7,29 @@ const emptyForm = {
   priority: "medium",
   dueDate: "",
   tags: "",
+  assignedTo: "",
 };
 
-function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
+const getMemberUser = (member) => {
+  if (!member?.user) {
+    return null;
+  }
+
+  return typeof member.user === "object"
+    ? member.user
+    : { _id: member.user, name: "", email: "" };
+};
+
+function TaskForm({
+  embedded = false,
+  initialValues,
+  isDisabled,
+  isSubmitting,
+  onCancel,
+  onSubmit,
+  projectMembers,
+  selectedProject,
+}) {
   const [formValues, setFormValues] = useState(emptyForm);
 
   useEffect(() => {
@@ -21,6 +41,7 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
         priority: initialValues.priority || "medium",
         dueDate: initialValues.dueDate ? initialValues.dueDate.slice(0, 10) : "",
         tags: initialValues.tags?.join(", ") || "",
+        assignedTo: initialValues.assignedTo?._id || initialValues.assignedTo || "",
       });
       return;
     }
@@ -38,15 +59,19 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
     await onSubmit(formValues, () => setFormValues(emptyForm));
   };
 
-  return (
-    <section className="panel accent-panel task-form-panel">
+  const shouldShowCancel = Boolean(onCancel);
+
+  const content = (
+    <>
       <div className="task-form-heading">
         <p className="eyebrow compact-eyebrow">
           {initialValues ? "Editing task" : "Quick capture"}
         </p>
         <h2>{initialValues ? "Update task" : "Create task"}</h2>
         <p className="task-form-copy">
-          Keep it concise now and refine the details later with subtasks.
+          {selectedProject
+            ? `New tasks will land inside ${selectedProject.name}.`
+            : "Select a project first so new tasks have a workspace scope."}
         </p>
       </div>
 
@@ -54,6 +79,7 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
         <label>
           Title
           <input
+            disabled={isDisabled}
             name="title"
             onChange={handleChange}
             placeholder="Ship the production-ready todo app"
@@ -65,6 +91,7 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
         <label>
           Description
           <textarea
+            disabled={isDisabled}
             name="description"
             onChange={handleChange}
             placeholder="Add details, blockers, or acceptance criteria..."
@@ -76,7 +103,11 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
         <div className="form-grid">
           <label>
             Status
-            <select name="status" onChange={handleChange} value={formValues.status}>
+            <select
+              disabled={isDisabled}
+              name="status"
+              onChange={handleChange}
+              value={formValues.status}>
               <option value="todo">Todo</option>
               <option value="in_progress">In progress</option>
               <option value="completed">Completed</option>
@@ -86,6 +117,7 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
           <label>
             Priority
             <select
+              disabled={isDisabled}
               name="priority"
               onChange={handleChange}
               value={formValues.priority}>
@@ -98,6 +130,7 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
           <label>
             Due date
             <input
+              disabled={isDisabled}
               name="dueDate"
               onChange={handleChange}
               type="date"
@@ -105,9 +138,35 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
             />
           </label>
 
+          <label>
+            Assigned to
+            <select
+              disabled={isDisabled}
+              name="assignedTo"
+              onChange={handleChange}
+              value={formValues.assignedTo}>
+              <option value="">Unassigned</option>
+              {projectMembers.map((member) => {
+                const memberUser = getMemberUser(member);
+
+                if (!memberUser?._id) {
+                  return null;
+                }
+
+                return (
+                  <option key={memberUser._id} value={memberUser._id}>
+                    {memberUser.name || memberUser.email || "Unknown member"} (
+                    {member.role})
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+
           <label className="form-row-span-2">
             Tags
             <input
+              disabled={isDisabled}
               name="tags"
               onChange={handleChange}
               placeholder="work, api, urgent"
@@ -117,7 +176,10 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
         </div>
 
         <div className="form-actions">
-          <button className="primary-button" disabled={isSubmitting} type="submit">
+          <button
+            className="primary-button"
+            disabled={isDisabled || isSubmitting}
+            type="submit">
             {isSubmitting
               ? "Saving..."
               : initialValues
@@ -125,13 +187,27 @@ function TaskForm({ initialValues, onSubmit, isSubmitting, onCancel }) {
                 : "Create task"}
           </button>
 
-          {initialValues ? (
-            <button className="ghost-button" onClick={onCancel} type="button">
-              Cancel edit
+          {shouldShowCancel ? (
+            <button
+              className="ghost-button"
+              disabled={isDisabled}
+              onClick={onCancel}
+              type="button">
+              {initialValues ? "Cancel edit" : "Cancel"}
             </button>
           ) : null}
         </div>
       </form>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="task-form-embedded">{content}</div>;
+  }
+
+  return (
+    <section className="panel accent-panel task-form-panel">
+      {content}
     </section>
   );
 }

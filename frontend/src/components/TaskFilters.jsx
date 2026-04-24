@@ -1,6 +1,16 @@
 import { useState } from "react";
 
-function TaskFilters({ filters, onChange, onReset, isLoading }) {
+const getMemberUser = (member) => {
+  if (!member?.user) {
+    return null;
+  }
+
+  return typeof member.user === "object"
+    ? member.user
+    : { _id: member.user, name: "", email: "" };
+};
+
+function TaskFilters({ filters, isLoading, onChange, onReset, projectMembers = [] }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const hasAdvancedOverrides =
@@ -22,8 +32,8 @@ function TaskFilters({ filters, onChange, onReset, isLoading }) {
           <h3>Filters</h3>
           <p>
             {isLoading
-              ? "Refreshing tasks..."
-              : "Search first, then narrow the current result set."}
+              ? "Refreshing project tasks..."
+              : "Search first, then narrow tasks inside the selected workspace."}
           </p>
         </div>
 
@@ -73,6 +83,28 @@ function TaskFilters({ filters, onChange, onReset, isLoading }) {
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+          </select>
+        </label>
+
+        <label>
+          Assignee
+          <select
+            name="assignedTo"
+            onChange={onChange}
+            value={filters.assignedTo || ""}>
+            <option value="">All</option>
+            <option value="unassigned">Unassigned</option>
+            {projectMembers.map((member) => {
+              const memberUser = getMemberUser(member);
+              const memberLabel =
+                memberUser?.name || memberUser?.email || "Unknown user";
+
+              return memberUser?._id ? (
+                <option key={memberUser._id} value={memberUser._id}>
+                  {memberLabel}
+                </option>
+              ) : null;
+            })}
           </select>
         </label>
       </div>

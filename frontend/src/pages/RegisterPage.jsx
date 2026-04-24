@@ -37,7 +37,7 @@ function RegisterPage() {
         <div>
           <p className="eyebrow">Start strong</p>
           <h1>Create your FlowTask account</h1>
-          <p className="auth-copy">Every user gets a separate workspace, private JWT auth, and personal task list.</p>
+          <p className="auth-copy">Create workspaces, share projects with teammates, and keep the existing JWT auth flow.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

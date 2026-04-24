@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { getTaskDueState } from "../utils/taskDueState";
 
 const columns = [
@@ -51,6 +52,11 @@ function KanbanCard({ task, isDragging = false, style }) {
   const completedSubtasks = task.completedSubtasksCount || 0;
   const subtasksCount = task.subtasksCount || 0;
   const visibleTags = task.tags?.slice(0, 2) || [];
+  const assigneeLabel = !task.assignedTo
+    ? "Unassigned"
+    : typeof task.assignedTo === "object"
+      ? task.assignedTo.name || task.assignedTo.email || "Assigned"
+      : "Assigned";
 
   return (
     <article
@@ -78,6 +84,7 @@ function KanbanCard({ task, isDragging = false, style }) {
 
       <div className="kanban-card-meta">
         <span className="pill pill-neutral">{formatDate(task.dueDate)}</span>
+        <span className="pill pill-neutral">Assignee: {assigneeLabel}</span>
         <span className="pill pill-neutral">
           {completedSubtasks}/{subtasksCount} subtasks
         </span>
@@ -210,6 +217,7 @@ function KanbanBoard({ tasks, isLoading, onStatusDrop }) {
       initialRect
         ? {
             width: initialRect.width,
+            height: initialRect.height,
           }
         : null,
     );
@@ -264,15 +272,22 @@ function KanbanBoard({ tasks, isLoading, onStatusDrop }) {
           ))}
         </div>
 
-        <DragOverlay adjustScale={false} dropAnimation={null}>
-          {activeTask ? (
-            <KanbanCard
-              isDragging
-              style={activeTaskRect || undefined}
-              task={activeTask}
-            />
-          ) : null}
-        </DragOverlay>
+        {typeof document !== "undefined"
+          ? createPortal(
+              <DragOverlay adjustScale={false} dropAnimation={null}>
+                {activeTask ? (
+                  <div className="kanban-drag-overlay">
+                    <KanbanCard
+                      isDragging
+                      style={activeTaskRect || undefined}
+                      task={activeTask}
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>,
+              document.body,
+            )
+          : null}
       </DndContext>
     </section>
   );

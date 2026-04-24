@@ -38,6 +38,13 @@ export const updateTaskStatus = (token, taskId, status) =>
     body: { status },
   });
 
+export const assignTask = (token, taskId, assignedTo) =>
+  apiRequest(`/tasks/${taskId}/assign`, {
+    method: 'PATCH',
+    token,
+    body: { assignedTo },
+  });
+
 export const createSubtask = (token, taskId, title) =>
   apiRequest(`/tasks/${taskId}/subtasks`, {
     method: 'POST',

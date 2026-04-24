@@ -6,22 +6,14 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const config = require("./config/env");
 const authRoutes = require("./routes/authRoutes");
+const projectInvitationRoutes = require("./routes/projectInvitationRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const { errorHandler, notFound } = require("./middleware/errorMiddleware");
 
 const app = express();
-const allowedOrigins = process.env.CLIENT_URLS.split(",");
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    credentials: true,
-  }),
-);
+app.use(cors());
+
 app.use(helmet());
 app.use(compression());
 app.use(
@@ -44,6 +36,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/project-invitations", projectInvitationRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 
 app.use(notFound);

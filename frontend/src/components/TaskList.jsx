@@ -14,6 +14,17 @@ const formatDate = (value) => {
 };
 
 const formatStatus = (value) => value.replace("_", " ");
+const formatAssignee = (assignedTo) => {
+  if (!assignedTo) {
+    return "Unassigned";
+  }
+
+  if (typeof assignedTo === "object") {
+    return assignedTo.name || assignedTo.email || "Assigned";
+  }
+
+  return "Assigned";
+};
 
 function TaskList({
   tasks,
@@ -71,7 +82,7 @@ function TaskList({
     return (
       <section className="panel empty-state">
         <h2>No tasks found</h2>
-        <p>Create your first task or widen the filters to see more results.</p>
+        <p>Create the first task in this project or widen the filters to see more results.</p>
       </section>
     );
   }
@@ -138,6 +149,7 @@ function TaskList({
                 {task.priority}
               </span>
               <span className="pill pill-neutral">{formatDate(task.dueDate)}</span>
+              <span className="pill pill-neutral">Assignee: {formatAssignee(task.assignedTo)}</span>
               <span className="pill pill-neutral">
                 {completedSubtasks}/{subtasksCount} subtasks
               </span>
