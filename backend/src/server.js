@@ -1,6 +1,9 @@
 const http = require('http');
 const mongoose = require('mongoose');
 const app = require('./app');
+const dotenv = require('dotenv');
+
+dotenv.config();
 const connectDb = require('./config/db');
 const config = require('./config/env');
 const { startReminderScheduler } = require('./jobs/reminderScheduler');
